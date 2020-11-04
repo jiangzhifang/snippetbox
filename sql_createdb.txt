@@ -1,0 +1,5 @@
+
+# postgres shell
+createuser --pwprompt web
+createdb -O web -E Unicode -T template0 snippetbox
+
