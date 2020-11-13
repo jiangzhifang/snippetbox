@@ -3,25 +3,25 @@ package main
 import (
 	"database/sql"
 	"flag"
+	"html/template"
 	"log"
 	"net/http"
 	"os"
 
-	// "github.com/jiangzhifang/snippetbox/pkg/models/postgresql"
 	"github.com/jiangzhifang/snippetbox/pkg/models/postgresql"
 	_ "github.com/lib/pq"
 )
 
 type application struct {
-	errorLog *log.Logger
-	infoLog  *log.Logger
-	snippets *postgresql.SnippetModel
+	errorLog      *log.Logger
+	infoLog       *log.Logger
+	snippets      *postgresql.SnippetModel
+	templateCache map[string]*template.Template
 }
 
 func main() {
-	addr := flag.String("addr", ":4000", "HTTP network address")
-	// dsn := flag.String("dsn", "web:pass@127.0.0.1/snippetbox?parseTime=true", "PostgreSQL data source name")
 	dsn := "dbname=snippetbox sslmode=disable user=web password=pass host=127.0.0.1"
+	addr := flag.String("addr", ":4000", "HTTP network address")
 	flag.Parse()
 
 	infoLog := log.New(os.Stdout, "INFO\t", log.Ldate|log.Ltime)
@@ -34,10 +34,16 @@ func main() {
 
 	defer db.Close()
 
+	templateCache, err := newTemplateCache("./ui/html/")
+	if err != nil {
+		errorLog.Fatal(err)
+	}
+
 	app := &application{
-		errorLog: errorLog,
-		infoLog:  infoLog,
-		snippets: &postgresql.SnippetModel{DB: db},
+		errorLog:      errorLog,
+		infoLog:       infoLog,
+		snippets:      &postgresql.SnippetModel{DB: db},
+		templateCache: templateCache,
 	}
 
 	srv := &http.Server{
