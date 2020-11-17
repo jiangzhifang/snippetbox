@@ -5,6 +5,7 @@ import (
 
 	"github.com/bmizerany/pat"
 	"github.com/justinas/alice"
+	// "github.com/gobuffalo/packr/v2"
 )
 
 func (app *application) routes() http.Handler {
@@ -24,8 +25,11 @@ func (app *application) routes() http.Handler {
 	mux.Post("/user/login", dynamicMiddleware.ThenFunc(app.loginUser))
 	mux.Post("/user/logout", dynamicMiddleware.Append(app.requireAuthentication).ThenFunc(app.logoutUser))
 
+	// fsbox := packr.New("someBoxName", "./ui/static")
 	fileServer := http.FileServer(http.Dir("./ui/static"))
+	// fileServer := http.FileServer(fsbox)
 	mux.Get("/static/", http.StripPrefix("/static", fileServer))
+	// mux.Get("/static/", fileServer)
 
 	// return app.recoverPanaic(app.logRequest(secureHeaders(mux)))
 	return standardMiddleware.Then(mux)
